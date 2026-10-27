@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
-import { signupSchema, loginSchema } from "../validators/authSchemas.js";
+import { signupSchema, loginSchema, changePasswordSchema } from "../validators/authSchemas.js";
 
 const SALT_ROUNDS = 10;
 const MAX_ATTEMPTS = 5;
@@ -132,6 +132,43 @@ export const getMe = async (req, res) => {
       return res.status(404).json({ message: "Employee not found" });
     }
     res.json({ employee: rows[0] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  const parsed = changePasswordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ message: "Validation failed", errors: formatErrors(parsed.error) });
+  }
+
+  const { currentPassword, newPassword } = parsed.data;
+
+  try {
+    const [rows] = await pool.query(
+      "SELECT password_hash FROM employees WHERE employee_id = ?",
+      [req.user.id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Employee not found" });
+    }
+
+    const currentOk = await bcrypt.compare(currentPassword, rows[0].password_hash);
+    if (!currentOk) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await pool.query(
+      "UPDATE employees SET password_hash = ?, must_change_password = FALSE WHERE employee_id = ?",
+      [newHash, req.user.id]
+    );
+
+    res.json({ message: "Password changed successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

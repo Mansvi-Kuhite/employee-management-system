@@ -4,6 +4,8 @@ import { Alert, Button, TextField } from "@mui/material";
 import { signupSchema } from "./schemas";
 import { signupRequest } from "../../api/authApi";
 import { toFieldErrors } from "../../utils/zodErrors";
+import  PasswordStrength  from "../../common/PasswordStrength"
+import  PasswordField  from "../../common/PasswordField";
 
 export default function SignupPage() {
   const [form, setForm] = useState({
@@ -87,7 +89,7 @@ export default function SignupPage() {
           helperText={errors.email}
         />
 
-        <TextField
+        <PasswordField
           fullWidth
           label="Password"
           name="password"
@@ -97,8 +99,10 @@ export default function SignupPage() {
           error={Boolean(errors.password)}
           helperText={errors.password}
         />
+         
+        <PasswordStrength password={form.password} />
 
-        <TextField
+        <PasswordField
           fullWidth
           label="Confirm Password"
           name="confirmPassword"

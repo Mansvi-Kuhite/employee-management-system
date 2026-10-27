@@ -18,6 +18,9 @@ export default function DashboardPage() {
       <Button variant="contained" onClick={handleLogout}>
         Logout
       </Button>
+      <Button variant="outlined" onClick={() => navigate("/change-password")}>
+        Change password
+      </Button>
     </div>
   );
 }

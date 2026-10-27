@@ -5,6 +5,8 @@ import { loginSchema } from "./schemas";
 import { loginRequest } from "../../api/authApi";
 import { useAuth } from "../../hooks/useAuth";
 import { toFieldErrors } from "../../utils/zodErrors";
+import { useToast } from "../../hooks/useToast";
+import  PasswordField from "../../common/PasswordField";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -13,6 +15,7 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const { login } = useAuth();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -33,9 +36,10 @@ export default function LoginPage() {
 
     setSubmitting(true);
     try {
-      const res = await loginRequest(result.data);
-      login(res.data.token, res.data.employee);
-      navigate("/dashboard");
+     const res = await loginRequest(result.data);
+     login(res.data.token, res.data.employee);
+     showToast(`Welcome back, ${res.data.employee.name}`);
+     navigate("/dashboard");
     } catch (err) {
       setServerError(err.response?.data?.message || "Could not reach the server");
     } finally {
@@ -66,7 +70,7 @@ export default function LoginPage() {
           error={Boolean(errors.email)}
           helperText={errors.email}
         />
-        <TextField
+        <PasswordField
           fullWidth
           label="Password"
           name="password"

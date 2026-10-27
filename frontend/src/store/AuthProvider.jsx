@@ -28,9 +28,14 @@ export default function AuthProvider({ children }) {
     localStorage.removeItem("token");
     setEmployee(null);
   };
+  
+
+  const updateEmployee = (changes) => {
+  setEmployee((current) => ({ ...current, ...changes }));
+  };
 
   return (
-    <AuthContext.Provider value={{ employee, loading, login, logout }}>
+    <AuthContext.Provider value={{ employee, loading, login, logout, updateEmployee }}>
       {children}
     </AuthContext.Provider>
   );
