@@ -28,3 +28,16 @@ export const changePasswordSchema = z
     message: "New password must be different from the current one",
     path: ["newPassword"],
   });
+
+  export const forgotPasswordSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Enter a valid email"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Reset token is required"),
+  newPassword: z
+    .string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password needs an uppercase letter")
+    .regex(/[0-9]/, "Password needs a number"),
+});

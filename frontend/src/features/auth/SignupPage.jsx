@@ -1,11 +1,23 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Alert, Button, TextField } from "@mui/material";
+import {
+  Alert,
+  Button,
+  CircularProgress,
+  InputAdornment,
+  TextField,
+} from "@mui/material";
+import Person from "@mui/icons-material/Person";
+import Email from "@mui/icons-material/Email";
+import LockOutlined from "@mui/icons-material/LockOutlined";
+
+import AuthLayout from "../auth/AuthLayout";
 import { signupSchema } from "./schemas";
 import { signupRequest } from "../../api/authApi";
 import { toFieldErrors } from "../../utils/zodErrors";
-import  PasswordStrength  from "../../common/PasswordStrength"
-import  PasswordField  from "../../common/PasswordField";
+import PasswordStrength from "../../common/PasswordStrength";
+import PasswordField from "../../common/PasswordField";
 
 export default function SignupPage() {
   const [form, setForm] = useState({
@@ -41,14 +53,11 @@ export default function SignupPage() {
 
     try {
       const { name, email, password } = result.data;
-
       await signupRequest({ name, email, password });
-
       navigate("/login", { state: { registered: true } });
     } catch (err) {
       setServerError(
-        err.response?.data?.message ||
-          "Could not reach the server"
+        err.response?.data?.message || "Could not reach the server"
       );
     } finally {
       setSubmitting(false);
@@ -56,82 +65,122 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
-      <form
-        onSubmit={handleSubmit}
-        noValidate
-        className="w-full max-w-md space-y-4 rounded-2xl bg-white p-8 shadow"
-      >
-        <h1 className="text-2xl font-bold">Create an account</h1>
+    <AuthLayout>
+      <div className="w-full">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Create your account
+        </h1>
 
-        {serverError && (
-          <Alert severity="error">{serverError}</Alert>
-        )}
+        <p className="mt-2 text-sm text-gray-600">
+          Join your team’s workspace
+        </p>
 
-        <TextField
-          fullWidth
-          label="Full Name"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          error={Boolean(errors.name)}
-          helperText={errors.name}
-        />
-
-        <TextField
-          fullWidth
-          label="Email"
-          name="email"
-          type="email"
-          value={form.email}
-          onChange={handleChange}
-          error={Boolean(errors.email)}
-          helperText={errors.email}
-        />
-
-        <PasswordField
-          fullWidth
-          label="Password"
-          name="password"
-          type="password"
-          value={form.password}
-          onChange={handleChange}
-          error={Boolean(errors.password)}
-          helperText={errors.password}
-        />
-         
-        <PasswordStrength password={form.password} />
-
-        <PasswordField
-          fullWidth
-          label="Confirm Password"
-          name="confirmPassword"
-          type="password"
-          value={form.confirmPassword}
-          onChange={handleChange}
-          error={Boolean(errors.confirmPassword)}
-          helperText={errors.confirmPassword}
-        />
-
-        <Button
-          type="submit"
-          variant="contained"
-          fullWidth
-          disabled={submitting}
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="mt-6 flex flex-col gap-3"
         >
-          {submitting ? "Creating account..." : "Sign Up"}
-        </Button>
+          {serverError && (
+            <Alert severity="error">{serverError}</Alert>
+          )}
 
-        <p className="text-center text-sm">
+          <TextField
+            fullWidth
+            size="small"
+            label="Full Name"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            error={Boolean(errors.name)}
+            helperText={errors.name}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Person />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+
+          <TextField
+            fullWidth
+            size="small"
+            label="Email"
+            name="email"
+            type="email"
+            value={form.email}
+            onChange={handleChange}
+            error={Boolean(errors.email)}
+            helperText={errors.email}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Email />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+
+          <PasswordField
+            fullWidth
+            size="small"
+            label="Password"
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={handleChange}
+            error={Boolean(errors.password)}
+            helperText={errors.password}
+            startAdornment={<LockOutlined />}
+          />
+
+          <PasswordStrength password={form.password} />
+
+          <PasswordField
+            fullWidth
+            size="small"
+            label="Confirm Password"
+            name="confirmPassword"
+            type="password"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            error={Boolean(errors.confirmPassword)}
+            helperText={errors.confirmPassword}
+            startAdornment={<LockOutlined />}
+          />
+
+          <Button
+            type="submit"
+            variant="contained"
+            fullWidth
+            size="large"
+            disabled={submitting}
+          >
+            {submitting ? (
+              <>
+                <CircularProgress size={20} color="inherit" />
+                <span className="ml-2">Creating account...</span>
+              </>
+            ) : (
+              "Create account"
+            )}
+          </Button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-gray-600">
           Already have an account?{" "}
           <Link
             to="/login"
-            className="font-semibold text-pink-600"
+            className="font-semibold text-link hover:underline"
           >
-            Login
+            Sign in
           </Link>
         </p>
-      </form>
-    </div>
+      </div>
+    </AuthLayout>
   );
 }

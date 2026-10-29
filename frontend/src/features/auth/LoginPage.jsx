@@ -1,15 +1,32 @@
+
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Alert, Button, TextField } from "@mui/material";
+import {
+  Alert,
+  Button,
+  Checkbox,
+  CircularProgress,
+  FormControlLabel,
+  InputAdornment,
+  TextField,
+} from "@mui/material";
+import Email from "@mui/icons-material/Email";
+import LockOutlined from "@mui/icons-material/LockOutlined";
+import ArrowForward from "@mui/icons-material/ArrowForward";
+import Google from "@mui/icons-material/Google";
+
+import AuthLayout from "./AuthLayout";
+import PasswordField from "../../common/PasswordField";
 import { loginSchema } from "./schemas";
 import { loginRequest } from "../../api/authApi";
 import { useAuth } from "../../hooks/useAuth";
-import { toFieldErrors } from "../../utils/zodErrors";
 import { useToast } from "../../hooks/useToast";
-import  PasswordField from "../../common/PasswordField";
+import { toFieldErrors } from "../../utils/zodErrors";
+import { APP_NAME } from "../../lib/constants";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
+  const [remember, setRemember] = useState(false);
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -28,70 +45,140 @@ export default function LoginPage() {
     setServerError("");
 
     const result = loginSchema.safeParse(form);
+
     if (!result.success) {
       setErrors(toFieldErrors(result.error));
       return;
     }
-    setErrors({});
 
+    setErrors({});
     setSubmitting(true);
+
     try {
-     const res = await loginRequest(result.data);
-     login(res.data.token, res.data.employee);
-     showToast(`Welcome back, ${res.data.employee.name}`);
-     navigate("/dashboard");
+      const res = await loginRequest(result.data);
+
+      login(res.data.token, res.data.employee, remember);
+
+      showToast(`Welcome back, ${res.data.employee.name}`);
+      navigate("/dashboard");
     } catch (err) {
-      setServerError(err.response?.data?.message || "Could not reach the server");
+      setServerError(
+        err.response?.data?.message || "Could not reach the server"
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 p-4">
-      <form
-        onSubmit={handleSubmit}
-        noValidate
-        className="w-full max-w-md space-y-4 rounded-2xl bg-white p-8 shadow"
-      >
-        <h1 className="text-2xl font-bold">Login</h1>
+    <AuthLayout>
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-3">
+        <div className="mb-1 text-center">
+          <h1 className="text-xl font-bold text-ink">Welcome to your workspace</h1>
+          <p className="mt-1 text-sm text-slate-500">Sign in to manage your team</p>
+        </div>
+
 
         {location.state?.registered && (
-          <Alert severity="success">Account created. Please log in.</Alert>
+          <Alert severity="success">
+            Account created. Please log in.
+          </Alert>
         )}
-        {serverError && <Alert severity="error">{serverError}</Alert>}
+
+        {location.state?.passwordReset && (
+          <Alert severity="success">
+            Password reset. Please log in.
+          </Alert>
+        )}
+
+
 
         <TextField
           fullWidth
-          label="Email"
+          size="small"
+          placeholder="Work email"
           name="email"
+          autoComplete="email"
           value={form.email}
           onChange={handleChange}
           error={Boolean(errors.email)}
           helperText={errors.email}
+          slotProps={{
+            htmlInput: { "aria-label": "Work email" },
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Email />
+                </InputAdornment>
+              ),
+            },
+          }}
         />
+
         <PasswordField
           fullWidth
-          label="Password"
+          size="small"
+          placeholder="Password"
           name="password"
-          type="password"
+          autoComplete="current-password"
+          icon={<LockOutlined />}
           value={form.password}
           onChange={handleChange}
           error={Boolean(errors.password)}
           helperText={errors.password}
         />
 
-        <Button type="submit" variant="contained" fullWidth disabled={submitting}>
-          {submitting ? "Logging in..." : "Login"}
+        <div className="flex items-center justify-between">
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                size="small"
+              />
+            }
+            label="Remember me"
+            sx={{ "& .MuiFormControlLabel-label": { fontSize: "0.875rem" } }}
+          />
+          <Link to="/forgot-password" className="text-sm font-semibold text-link">
+            Forgot password?
+          </Link>
+        </div>
+
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          disabled={submitting}
+          endIcon={submitting ? null : <ArrowForward />}
+        >
+          {submitting ? <CircularProgress size={24} color="inherit" /> : "Sign in"}
         </Button>
 
-        <p className="text-center text-sm">
-          New here?{" "}
-          <Link to="/signup" className="font-semibold text-pink-600">
-            Create an account
+        <div className="flex items-center gap-3 text-xs text-slate-400">
+          <div className="h-px flex-1 bg-gray-200" />
+          or continue with
+          <div className="h-px flex-1 bg-gray-200" />
+        </div>
+
+        <Button
+          variant="outlined"
+          color="inherit"
+          fullWidth
+          startIcon={<Google />}
+          onClick={() => showToast("Google sign-in isn't set up yet", "info")}
+          sx={{ borderColor: "#cfe2f5" }}
+        >
+          Sign in with Google
+        </Button>
+
+        <p className="text-center text-sm text-slate-600">
+          New to {APP_NAME}?{" "}
+          <Link to="/signup" className="font-semibold text-link">
+            Create account
           </Link>
         </p>
       </form>
-    </div>
+    </AuthLayout>
   );
 }

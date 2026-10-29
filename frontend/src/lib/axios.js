@@ -2,7 +2,7 @@
 // Later, this is where you’ll attach the login token to every request.
 
 import axios from "axios";
-
+import { getToken } from "../utils/tokenStorage";
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });

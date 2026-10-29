@@ -3,7 +3,7 @@ import { IconButton, InputAdornment, TextField } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
-export default function PasswordField(props) {
+export default function PasswordField({ icon, ...props }) {
   const [show, setShow] = useState(false);
 
   return (
@@ -11,7 +11,11 @@ export default function PasswordField(props) {
       {...props}
       type={show ? "text" : "password"}
       slotProps={{
-        input: {
+         htmlInput: { "aria-label": props.placeholder || props.label },
+         input: {
+         startAdornment: icon ? (
+          <InputAdornment position="start">{icon}</InputAdornment>
+        ) : null,
           endAdornment: (
             <InputAdornment position="end">
               <IconButton

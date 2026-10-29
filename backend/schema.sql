@@ -10,3 +10,16 @@ ALTER TABLE employees
   ADD COLUMN status ENUM('active','inactive','locked') NOT NULL DEFAULT 'active',
   ADD COLUMN failed_attempts INT NOT NULL DEFAULT 0,
   ADD COLUMN must_change_password BOOLEAN NOT NULL DEFAULT FALSE;
+
+
+  USE employee_management;
+
+CREATE TABLE IF NOT EXISTS password_resets (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  employee_id INT NOT NULL,
+  token_hash CHAR(64) NOT NULL UNIQUE,
+  expires_at DATETIME NOT NULL,
+  used_at DATETIME NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (employee_id) REFERENCES employees(employee_id) ON DELETE CASCADE
+);

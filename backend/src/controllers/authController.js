@@ -1,10 +1,21 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
-import { signupSchema, loginSchema, changePasswordSchema } from "../validators/authSchemas.js";
+import crypto from "crypto";
+import { sendResetEmail } from "../utils/mailer.js";
+import { 
+  signupSchema,
+  loginSchema, 
+  changePasswordSchema , 
+  forgotPasswordSchema,
+  resetPasswordSchema} from "../validators/authSchemas.js";
 
 const SALT_ROUNDS = 10;
 const MAX_ATTEMPTS = 5;
+const RESET_MINUTES = 15;
+
+const hashToken = (token) =>
+  crypto.createHash("sha256").update(token).digest("hex");
 
 const createToken = (employee) =>
   jwt.sign(
@@ -172,5 +183,120 @@ export const changePassword = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+export const forgotPassword = async (req, res) => {
+  const parsed = forgotPasswordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ message: "Validation failed", errors: formatErrors(parsed.error) });
+  }
+
+  const { email } = parsed.data;
+  const genericReply = {
+    message: "If that email is registered, a reset link has been sent.",
+  };
+
+  try {
+    const [rows] = await pool.query(
+      "SELECT employee_id, employee_name, status FROM employees WHERE email = ?",
+      [email]
+    );
+    const employee = rows[0];
+
+    if (employee && employee.status === "active") {
+      const token = crypto.randomBytes(32).toString("hex");
+
+      await pool.query("DELETE FROM password_resets WHERE employee_id = ?", [
+        employee.employee_id,
+      ]);
+      await pool.query(
+        `INSERT INTO password_resets (employee_id, token_hash, expires_at)
+         VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE))`,
+        [employee.employee_id, hashToken(token), RESET_MINUTES]
+      );
+
+      const link = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
+      sendResetEmail(email, employee.employee_name, link, RESET_MINUTES).catch(
+        (err) => console.error("Email failed:", err.message)
+      );
+    }
+
+    res.json(genericReply);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const verifyResetToken = async (req, res) => {
+  const token = String(req.query.token || "");
+  const invalid = { valid: false, message: "Reset link is invalid or has expired" };
+
+  if (!token) return res.status(400).json(invalid);
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT id FROM password_resets
+       WHERE token_hash = ? AND used_at IS NULL AND expires_at > NOW()`,
+      [hashToken(token)]
+    );
+    if (rows.length === 0) return res.status(400).json(invalid);
+
+    res.json({ valid: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  const parsed = resetPasswordSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ message: "Validation failed", errors: formatErrors(parsed.error) });
+  }
+
+  const { token, newPassword } = parsed.data;
+  const conn = await pool.getConnection();
+
+  try {
+    await conn.beginTransaction();
+
+    const [rows] = await conn.query(
+      `SELECT id, employee_id FROM password_resets
+       WHERE token_hash = ? AND used_at IS NULL AND expires_at > NOW()
+       FOR UPDATE`,
+      [hashToken(token)]
+    );
+
+    if (rows.length === 0) {
+      await conn.rollback();
+      return res
+        .status(400)
+        .json({ message: "Reset link is invalid or has expired" });
+    }
+
+    const { id, employee_id } = rows[0];
+    const newHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    await conn.query(
+      `UPDATE employees
+       SET password_hash = ?, must_change_password = FALSE, failed_attempts = 0
+       WHERE employee_id = ?`,
+      [newHash, employee_id]
+    );
+    await conn.query("UPDATE password_resets SET used_at = NOW() WHERE id = ?", [id]);
+
+    await conn.commit();
+    res.json({ message: "Password reset successful. Please log in." });
+  } catch (err) {
+    await conn.rollback();
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  } finally {
+    conn.release();
   }
 };
