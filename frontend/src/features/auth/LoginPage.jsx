@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Alert,
@@ -14,7 +14,6 @@ import Email from "@mui/icons-material/Email";
 import LockOutlined from "@mui/icons-material/LockOutlined";
 import ArrowForward from "@mui/icons-material/ArrowForward";
 import Google from "@mui/icons-material/Google";
-
 import AuthLayout from "./AuthLayout";
 import PasswordField from "../../common/PasswordField";
 import { loginSchema } from "./schemas";
@@ -23,6 +22,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { toFieldErrors } from "../../utils/zodErrors";
 import { APP_NAME } from "../../lib/constants";
+import { clearFlash, readFlash } from "../../utils/flashMessage";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -36,6 +36,14 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const FLASH_TEXT = {
+    idle: "You were logged out because of inactivity.",
+    expired: "Your session expired. Please log in again.",
+  };
+  const [flash] = useState(readFlash);
+  useEffect(() => {
+    clearFlash();
+  }, []);
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -63,7 +71,10 @@ export default function LoginPage() {
       navigate("/dashboard");
     } catch (err) {
       setServerError(
-        err.response?.data?.message || "Could not reach the server"
+        err.response?.data?.message ||
+        (err.response?.status === 401
+          ? "Invalid email or password"
+          : "Unable to sign in. Please try again.")
       );
     } finally {
       setSubmitting(false);
@@ -88,6 +99,13 @@ export default function LoginPage() {
         {location.state?.passwordReset && (
           <Alert severity="success">
             Password reset. Please log in.
+          </Alert>
+        )}
+
+        {FLASH_TEXT[flash] && <Alert severity="info">{FLASH_TEXT[flash]}</Alert>}
+        {serverError && (
+          <Alert severity="error">
+            {serverError}
           </Alert>
         )}
 

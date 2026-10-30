@@ -6,21 +6,25 @@ import { clearToken, getToken, saveToken } from "../utils/tokenStorage";
 
 export default function AuthProvider({ children }) {
   const [employee, setEmployee] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(getToken()));
 
   useEffect(() => {
     const token = getToken();
 
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
 
     api
       .get("/auth/me")
-      .then((res) => setEmployee(res.data.employee))
-      .catch(() => clearToken())
-      .finally(() => setLoading(false));
+      .then((res) => {
+        setEmployee(res.data.employee);
+      })
+      .catch(() => {
+        clearToken();
+        setEmployee(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
 
   const login = (token, employeeData, remember = false) => {
@@ -34,7 +38,9 @@ export default function AuthProvider({ children }) {
   };
 
   const updateEmployee = (changes) => {
-    setEmployee((current) => ({ ...current, ...changes }));
+    setEmployee((current) =>
+      current ? { ...current, ...changes } : current
+    );
   };
 
   return (
@@ -45,3 +51,4 @@ export default function AuthProvider({ children }) {
     </AuthContext.Provider>
   );
 }
+

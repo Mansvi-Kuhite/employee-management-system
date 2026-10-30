@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
-import api from "./lib/axios";
 import AppRoutes from "./routes/AppRoutes";
+import IdleLogout from "./common/IdleLogout";
 
 export default function App() {
-  return <AppRoutes />;
+  return (
+    <>
+      <AppRoutes />
+      <IdleLogout />
+    </>
+  );
 }

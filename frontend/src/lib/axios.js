@@ -1,18 +1,35 @@
-// This is one shared axios instance, so the API URL lives in one place.
-// Later, this is where you’ll attach the login token to every request.
 
 import axios from "axios";
-import { getToken } from "../utils/tokenStorage";
+import { clearToken, getToken } from "../utils/tokenStorage";
+import { setFlash } from "../utils/flashMessage";
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = getToken();
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const isLoginCall = error.config?.url?.includes("/auth/login");
+
+    if (error.response?.status === 401 && !isLoginCall && getToken()) {
+      setFlash("expired");
+      clearToken();
+      window.location.href = "/login";
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export default api;

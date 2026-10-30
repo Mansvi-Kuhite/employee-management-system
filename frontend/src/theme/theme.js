@@ -19,6 +19,10 @@ const theme = createTheme({
   components: {
     MuiButton: {
       defaultProps: { disableElevation: true },
+  styleOverrides: {
+    outlinedPrimary: { color: "#2d1f3d", borderColor: "#f2a7c3" },
+    textPrimary: { color: "#2d1f3d" },
+  },
     },
     MuiOutlinedInput: {
       styleOverrides: {
