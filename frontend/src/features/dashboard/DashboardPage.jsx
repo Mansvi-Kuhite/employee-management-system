@@ -1,26 +1,19 @@
-import { Button } from "@mui/material";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 
 export default function DashboardPage() {
-  const { employee, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  const { employee } = useAuth();
 
   return (
-    <div className="space-y-2 p-8">
-      <h1 className="text-2xl font-bold">Welcome, {employee.name}</h1>
-      <p>Role: {employee.role}</p>
-      <Button variant="contained" onClick={handleLogout}>
-        Logout
-      </Button>
-      <Button variant="outlined" onClick={() => navigate("/change-password")}>
-        Change password
-      </Button>
+    <div className="space-y-4">
+      <div className="rounded-2xl bg-gradient-to-br from-pink-100 to-sky-100 p-6">
+        <h2 className="text-2xl font-bold text-ink">Welcome, {employee.name}</h2>
+        <p className="mt-1 text-slate-600">
+          You're signed in as <span className="font-semibold capitalize">{employee.role}</span>.
+        </p>
+      </div>
+      <p className="text-sm text-slate-500">
+        Dashboard widgets arrive with the next modules.
+      </p>
     </div>
   );
 }

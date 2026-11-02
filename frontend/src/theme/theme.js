@@ -23,6 +23,21 @@ const theme = createTheme({
     outlinedPrimary: { color: "#2d1f3d", borderColor: "#f2a7c3" },
     textPrimary: { color: "#2d1f3d" },
   },
+  MuiListItemButton: {
+  styleOverrides: {
+    root: {
+      borderRadius: 12,
+      "&:hover": { backgroundColor: "#eef5fc" },
+      "&.Mui-selected": {
+        backgroundColor: "#f9d3e1",
+        "&:hover": { backgroundColor: "#f6c3d6" },
+      },
+    },
+  },
+},
+MuiListItemIcon: {
+  styleOverrides: { root: { minWidth: 40, color: "#2d1f3d" } },
+},
     },
     MuiOutlinedInput: {
       styleOverrides: {
