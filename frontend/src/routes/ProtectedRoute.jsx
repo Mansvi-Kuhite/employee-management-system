@@ -12,9 +12,9 @@ export default function ProtectedRoute({ roles }) {
     return <Navigate to="/change-password" replace />;
   }
 
-  if (roles && !roles.includes(employee.role)) {
-    return <Navigate to="/dashboard" replace />;
-  }
+ if (roles && !roles.includes(employee.role)) {
+  return <Navigate to="/404" replace />;
+}
 
   return <Outlet />;
 }

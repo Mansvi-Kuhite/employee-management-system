@@ -29,3 +29,15 @@ CREATE TABLE IF NOT EXISTS password_resets (
         REFERENCES employees(employee_id)
         ON DELETE CASCADE
 );
+
+USE employee_management;
+
+ALTER TABLE departments
+  ADD UNIQUE KEY uq_department_name (department_name),
+  ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+INSERT INTO departments (department_name) VALUES
+  ('Human Resources'), ('Sales'), ('IT'), ('Finance'),
+  ('Marketing'), ('Operations'), ('Customer Support');
+
+SELECT * FROM departments;

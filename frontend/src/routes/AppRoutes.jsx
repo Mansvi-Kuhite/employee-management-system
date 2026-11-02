@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import LoginPage from "../features/auth/LoginPage";
 import SignupPage from "../features/auth/SignupPage";
 import DashboardPage from "../features/dashboard/DashboardPage";
+import DepartmentsPage from "../features/organization/DepartmentsPage";
 
 import ProtectedRoute from "./ProtectedRoute";
 
@@ -12,6 +13,7 @@ import ForgotPasswordPage from "../features/auth/ForgotPasswordPage";
 import ResetPasswordPage from "../features/auth/ResetPasswordPage";
 
 import AppLayout from "../common/layout/AppLayout";
+import ComingSoonPage from "../common/ComingSoonPage";
 
 function PlaceholderPage({ title }) {
   return (
@@ -27,6 +29,8 @@ function PlaceholderPage({ title }) {
 export default function AppRoutes() {
   return (
     <Routes>
+
+      <Route path="/" element={<Navigate to="/dashboard" replace />} />
       {/* Public Routes */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
@@ -37,15 +41,15 @@ export default function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route path="/change-password" element={<ChangePasswordPage />} />
 
+        <Route element={<ProtectedRoute roles={["admin"]} />}>
+          <Route path="/organization/departments" element={<DepartmentsPage />} />
+        </Route>
+
         {/* Application Layout */}
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
 
-          {/* Organization */}
-          <Route
-            path="/organization/departments"
-            element={<PlaceholderPage title="Departments" />}
-          />
+         
 
           <Route
             path="/organization/designations"
@@ -75,7 +79,12 @@ export default function AppRoutes() {
         </Route>
       </Route>
 
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/404" element={<ComingSoonPage />} />
+
+      <Route
+        path="*"
+        element={<ComingSoonPage />}
+      />
     </Routes>
   );
 }
